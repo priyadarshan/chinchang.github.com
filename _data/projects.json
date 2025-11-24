@@ -1,5 +1,11 @@
 [
   {
+    "name": "Home127",
+    "link": "https://buy.polar.sh/polar_cl_W7KDYAyZcBpnR1x8MHAdstYoeD4N1JLHKJpo039duFG",
+    "desc": "Home127 discovers your running local Web servers and puts them right in your menu bar for instant access.",
+    "image": "/images/home127-256.png"
+  },
+  {
     "name": "Passportify",
     "link": "https://Passportify.ai",
     "desc": "Transform any image into a passport-compliant photo instantly using AI. Generate professional passport photos for official documents with perfect background and sizing.",
