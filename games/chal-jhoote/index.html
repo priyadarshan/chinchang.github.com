@@ -1,28 +1,44 @@
 <html>
-<head>
-<link href='https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:700&display=swap' rel='stylesheet' type='text/css'>
-<link href='style.css' rel='stylesheet' type='text/css'>
-<link rel="image_src" href="chal-jhoote.png">
-</head>
+  <head>
+    <link
+      href="https://fonts.googleapis.com/css?family=Yanone+Kaffeesatz:700&display=swap"
+      rel="stylesheet"
+      type="text/css"
+    />
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link rel="image_src" href="chal-jhoote.png" />
+  </head>
 
-<body>
+  <body>
+    <div class="screen ta-center" id="js-home-screen">
+      <h1>
+        <span style="color: #27ae60">Chal</span
+        ><span style="color: indianred">Jhoote</span>
+      </h1>
+      <h2>(Get Lost Liar)</h2>
+      <br />
+      <br />
 
-<div class="screen  ta-center" id="js-home-screen">
-    <h1><span style="color:#27ae60">Chal</span><span style="color:indianred">Jhoote</span></h1>
-    <h2>(Get Lost Liar)</h2>
-    <br>
-    <br>
-    
-    <button class="btn" onclick="startGame();">Play</button>
-    <br>
-    <a class="btn btn--twitter  js-tweet-btn" target="_blank" href="http://twitter.com/share?url=http://kushagragour.in/games/chal-jhoote/&amp;text=I scored 0 points in the game of Chal Jhoote. Come, detect some lies.&amp;count=horiztonal&amp;hashtags=byog,game&amp;via=chinchang457&amp;related=chinchang457">Tweet my score: <span class="js-main-highscore">0</span></a>
+      <button class="btn" onclick="startGame();">Play</button>
+      <br />
+      <a
+        class="btn btn--twitter js-tweet-btn"
+        target="_blank"
+        href="http://twitter.com/share?url=http://kushagragour.in/games/chal-jhoote/&amp;text=I scored 0 points in the game of Chal Jhoote. Come, detect some lies.&amp;count=horiztonal&amp;hashtags=byog,game&amp;via=chinchang457&amp;related=chinchang457"
+        >Tweet my score: <span class="js-main-highscore">0</span></a
+      >
 
+      <div class="footer ta-align">
+        Game by
+        <a href="https://x.com/cssmonk" target="_blank" class=""
+          >Kushagra Gour</a
+        >
+        | Made for <a href="http://13.byog.gamedev.in/">BYOG</a> Oct/2013
+      </div>
+    </div>
 
-    <div class="footer  ta-align">Game by <a href="https://twitter.com/chinchang457" target="_blank" class="">Kushagra Gour</a> | Made for <a href="http://13.byog.gamedev.in/">BYOG</a> Oct/2013</div>
-</div>
-
-<div class="screen hidden" id="js-game-screen">
-    <div class="canvas-wrap">
+    <div class="screen hidden" id="js-game-screen">
+      <div class="canvas-wrap">
         <canvas id="bg1" width="600" height="300"></canvas>
         <canvas id="c" width="600" height="300"></canvas>
         <!-- <div class="dom-elems">

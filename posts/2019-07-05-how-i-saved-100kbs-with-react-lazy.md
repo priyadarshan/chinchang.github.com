@@ -131,7 +131,7 @@ function App() {
 
 What we did here is once we import the named module, inside the `then` callback we turn it into a seemingly default exported module - an object with the module available on `default` key.
 
-That's all folks! Go shave off some unnecessary bytes of your pages. If you have any questions or comments, ask me on Twitter [@chinchang457](https://twitter.com/chinchang457) (DMs are open).
+That's all folks! Go shave off some unnecessary bytes of your pages. If you have any questions or comments, ask me on Twitter [@chinchang457](https://x.com/cssmonk) (DMs are open).
 
 [react-lazy]: https://reactjs.org/docs/code-splitting.html#reactlazy
 [react-suspense]: https://reactjs.org/docs/code-splitting.html#suspense

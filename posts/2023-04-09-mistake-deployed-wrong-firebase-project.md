@@ -15,7 +15,7 @@ This happened for the first time…I couldn’t really see why this should happe
 
 The error looked like the code I had deployed never got deployed - strange! There is one thing peculiar about that code though - it was from a yarn monorepo package outside the Firebase package. And because of how Firebase works, it's deployed in a little hacky manner. 🤷🏻 So I thought maybe that got messed up and I re-deployed. But even that didn’t fix anything.
 
-Just then I remembered - we had [introduced a staging environment on Firebase](https://twitter.com/chinchang457/status/1637825848223969281?s=20)! I quickly went into the terminal to check which project did I deploy to…and yes, I had deployed to the staging environment (which I was working on before deployment). 🤦🏻‍♂️
+Just then I remembered - we had [introduced a staging environment on Firebase](https://x.com/cssmonk/status/1637825848223969281?s=20)! I quickly went into the terminal to check which project did I deploy to…and yes, I had deployed to the staging environment (which I was working on before deployment). 🤦🏻‍♂️
 
 ## Solution
 
@@ -31,6 +31,6 @@ But that is not actually the solution to the problem. I can make the same mistak
 - I use a shell script that internally does Firebase deployment. I could make that script print out loud something like “DEPLOYING TO X PROJECT”…in s big font! So that as soon as deployment starts, I clearly see where I am deploying.
 - (Added on 12th April '23) Right now I use a single npm command `npm run deploy` to deploy. I could break that command into `npm run deploy:staging` and `npm run deploy:prod` to make it very explicit where I am deploying! And inside those commands I can set the right project with `firebase use`.
 
-I think I’ll go with 2nd one and see how it goes. Do you have a better solution to this? Let me know on [Twitter](https://twitter.com/chinchang457) or [LinkedIn](https://www.linkedin.com/in/chinchang/).
+I think I’ll go with 2nd one and see how it goes. Do you have a better solution to this? Let me know on [Twitter](https://x.com/cssmonk) or [LinkedIn](https://www.linkedin.com/in/chinchang/).
 
 See you in my next mistake!

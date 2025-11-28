@@ -215,7 +215,7 @@ By default, your website gets served on a `now.sh` subdomain but you have the op
 And here is the final product → https://a11yformanagers.now.sh/
 
 Remember, this app is open-source on Github → https://github.com/chinchang/a11y-for-managers
-So if you want to get your hands dirty in open-source by making your first contribution, this app is perfect way to do it. Presently it has support to show only only few accessibility issues as tweets. You can add support for more types of Accessibility issues. And [reach out to me](https://twitter.com/chinchang457) for any help.
+So if you want to get your hands dirty in open-source by making your first contribution, this app is perfect way to do it. Presently it has support to show only only few accessibility issues as tweets. You can add support for more types of Accessibility issues. And [reach out to me](https://x.com/cssmonk) for any help.
 
 Hope you had fun reading and learnt a few new things along the way.
 
