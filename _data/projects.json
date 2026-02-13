@@ -1,5 +1,12 @@
 [
   {
+    "name": "NameMySpace",
+    "link": "https://kushagra.dev/lab/namemyspace/",
+    "desc": "Name your Mac desktop spaces, give them colors and switch with keyboard shortcuts.",
+    "image": "https://kushagra.dev/lab/namemyspace/logo.png"
+  },
+
+  {
     "name": "Home127",
     "link": "https://buy.polar.sh/polar_cl_W7KDYAyZcBpnR1x8MHAdstYoeD4N1JLHKJpo039duFG",
     "desc": "Home127 discovers your running local Web servers and puts them right in your menu bar for instant access.",
