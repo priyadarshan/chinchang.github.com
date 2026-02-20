@@ -40,7 +40,23 @@
 }
 
 .cm-s-kalu-dark .CodeMirror-cursor {
-  border-left: 2px solid var(--accent);
+  border-left: 3px solid var(--accent) !important;
+  animation: cursorFade 1.2s ease-in-out infinite;
+  view-transition-name: kalu-cursor;
+}
+
+::view-transition-old(kalu-cursor) {
+  animation: none;
+  opacity: 0;
+}
+
+::view-transition-new(kalu-cursor) {
+  animation: cursorSlide 80ms ease-out;
+}
+
+@keyframes cursorFade {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
 }
 
 .cm-s-kalu-dark span.cm-comment {
