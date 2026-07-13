@@ -1,5 +1,12 @@
 [
   {
+    "name": "Reprush",
+    "link": "https://www.reprush.app",
+    "desc": "A free, browser-based workout app that uses on-device AI to count your exercise reps through your webcam — no equipment, account, or uploads needed.",
+    "image": "/images/reprush.png"
+  },
+
+  {
     "name": "NameMySpace",
     "link": "https://kushagra.dev/lab/namemyspace/",
     "desc": "Name your Mac desktop spaces, give them colors and switch with keyboard shortcuts.",
