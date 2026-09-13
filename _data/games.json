@@ -1,5 +1,10 @@
 [
   {
+    "name": "Swinicorn",
+    "link": "swinicorn",
+    "image": "swinicorn.png"
+  },
+  {
     "name": "Key Battle",
     "link": "https://js13kgames.com/games/key-battle/index.html",
     "image": "key-battle.png"
