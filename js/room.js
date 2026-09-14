@@ -370,8 +370,8 @@ function curtainTexture(seed) {
 // Screens
 // ---------------------------------------------------------------------------
 function makeMonitorScreen() {
-  const W = 400;
-  const H = 160;
+  const W = 480;
+  const H = 192;
   const cv = document.createElement("canvas");
   cv.width = W;
   cv.height = H;
@@ -381,54 +381,134 @@ function makeMonitorScreen() {
   tex.minFilter = THREE.LinearMipmapLinearFilter;
   tex.colorSpace = THREE.SRGBColorSpace;
 
-  const LEFT = [
-    ["#f7a1c4", "> build a voxel room for my homepage"],
-    ["#e8e8ff", "  Read 3 files, ran 2 shell commands"],
-    ["#f5d76e", "+ js/room.js"],
-    ["#f5d76e", "+ index.html"],
-    ["#a8ffb0", "  npx eleventy --serve"],
-    ["#e8e8ff", "  [11ty] Wrote 183 files"],
-    ["#f7a1c4", "> pay attention to details"],
-    ["#e8e8ff", "  Adding rubik's cube, posters,"],
-    ["#e8e8ff", "  robots, a purple ball..."],
-    ["#a8ffb0", "  done."],
-  ];
-  const RIGHT = [
-    ["#e8e8ff", "$ git status"],
-    ["#a8ffb0", "On branch master"],
-    ["#f5d76e", "  modified: index.html"],
-    ["#f5d76e", "  new file: js/room.js"],
-    ["#e8e8ff", "$ git commit -m 'voxel room'"],
-    ["#a8ffb0", "[master 3d1c0d3] voxel room"],
-    ["#e8e8ff", " 2 files changed, 900 insertions(+)"],
-    ["#e8e8ff", "$ git push"],
-    ["#a8ffb0", "Fast-forward"],
-    ["#f7a1c4", "$ whoami"],
-    ["#ffffff", "kushagra"],
-    ["#e8e8ff", "$ _"],
+  // ---- the session: a shell wandering through ~/about, ~/projects, ~/hobbies
+  const C_PROMPT = "#a8ffb0";
+  const C_CMD = "#ffffff";
+  const C_TEXT = "#e8e8ff";
+  const C_DIR = "#8fd3ff";
+  const C_HEAD = "#f5d76e";
+  const C_STAR = "#ffd166";
+  const C_MUTED = "#b9bff5";
+  const cmd = (text) => ({ type: "cmd", text });
+  const out = (text, color = C_TEXT) => ({ type: "out", text, color });
+  const cwd = (dir) => ({ type: "cwd", dir });
+  const pause = (secs) => ({ type: "pause", secs });
+  const SCRIPT = [
+    cmd("ls"),
+    out("about/   projects/   hobbies/", C_DIR),
+    cmd("cd about"),
+    cwd("~/about"),
+    cmd("cat me.txt"),
+    out("Hi, I'm Kushagra Gour."),
+    out("Frontend developer by profession."),
+    out("Builder by heart."),
+    cmd("cd ../projects"),
+    cwd("~/projects"),
+    cmd("ls"),
+    out("cssbattle/   web-maker/   scribbble/", C_DIR),
+    cmd("cat cssbattle/README.md"),
+    out("# CSSBattle", C_HEAD),
+    out("The CSS code-golfing game."),
+    out("★ 500K+ players", C_STAR),
+    cmd("cat web-maker/README.md"),
+    out("# Web Maker", C_HEAD),
+    out("An offline web playground, right in your browser."),
+    out("★ 100K+ users  ·  5000+ GitHub stars", C_STAR),
+    cmd("cat scribbble/README.md"),
+    out("# Scribbble", C_HEAD),
+    out("Annotate your screen, live. For macOS."),
+    cmd("cd ../hobbies"),
+    cwd("~/hobbies"),
+    cmd("ls"),
+    out("carpentry/   piano/   soccer/   games/", C_DIR),
+    cmd("cat piano/notes.txt"),
+    out("Yes, that is a real piano on the left."),
+    out("Go on, click a key.", C_MUTED),
+    cmd("cat carpentry/notes.txt"),
+    out("Wood, chisels, and the occasional splinter."),
+    cmd("cat soccer/notes.txt"),
+    out("Weekend striker. Rarely scores. Always plays."),
+    cmd("cat games/notes.txt"),
+    out("Makes them, plays them. See the gamepad on the desk."),
+    cmd("cd ~"),
+    cwd("~"),
+    cmd("echo thanks for visiting"),
+    out("thanks for visiting"),
+    pause(7),
   ];
 
-  let progress = 0; // total characters typed so far
-  const totalChars = () => LEFT.concat(RIGHT).reduce((n, l) => n + l[1].length, 0);
-  const TOTAL = totalChars();
-
-  function drawPane(lines, x0, y0, w, charsAvail) {
-    ctx.font = "bold 9px Menlo, Consolas, monospace";
-    let y = y0;
-    let budget = charsAvail;
-    for (const [color, text] of lines) {
-      if (budget <= 0) break;
-      const shown = text.slice(0, budget);
-      ctx.fillStyle = color;
-      ctx.fillText(shown, x0, y);
-      budget -= text.length;
-      y += 12;
-      if (y > H - 6) break;
+  // ---- flatten into timed events
+  const rnd = seeded(5);
+  const events = []; // { t, kind, ... } sorted by time
+  let t = 0.6;
+  let prompt = "~";
+  for (const item of SCRIPT) {
+    if (item.type === "cwd") {
+      prompt = item.dir;
+      continue;
     }
-    return { y, done: budget >= 0 };
+    if (item.type === "pause") {
+      t += item.secs;
+      continue;
+    }
+    if (item.type === "cmd") {
+      t += 0.7; // think before the next command
+      events.push({ t, kind: "prompt", prompt });
+      for (let i = 0; i < item.text.length; i++) {
+        t += 0.045 + rnd() * 0.05 + (item.text[i] === " " ? 0.05 : 0);
+        events.push({ t, kind: "char", ch: item.text[i] });
+      }
+      t += 0.35; // enter
+      events.push({ t, kind: "enter" });
+      continue;
+    }
+    // output line
+    t += 0.09;
+    events.push({ t, kind: "out", text: item.text, color: item.color });
+  }
+  const TOTAL = t + 0.5;
+
+  // ---- terminal state, replayed from the timeline
+  const lines = []; // each line: [[color, text], ...]
+  let input = null; // current prompt line being typed, or null
+  let nextEv = 0;
+  let lastCycle = -1;
+  let lastCharAt = -1;
+  const MAX_LINES = 40;
+  function reset() {
+    lines.length = 0;
+    input = null;
+    nextEv = 0;
+    lastCharAt = -1;
+  }
+  function apply(ev) {
+    if (ev.kind === "prompt") {
+      input = [[C_PROMPT, ev.prompt + " $ "], [C_CMD, ""]];
+      lines.push(input);
+    } else if (ev.kind === "char") {
+      if (input) input[1][1] += ev.ch;
+      lastCharAt = ev.t;
+    } else if (ev.kind === "enter") {
+      input = null;
+    } else if (ev.kind === "out") {
+      lines.push([[ev.color, ev.text]]);
+    }
+    if (lines.length > MAX_LINES) lines.splice(0, lines.length - MAX_LINES);
+  }
+  function advance(cycle) {
+    if (cycle < lastCycle) reset();
+    lastCycle = cycle;
+    while (nextEv < events.length && events[nextEv].t <= cycle) apply(events[nextEv++]);
   }
 
-  function draw(t) {
+  const FONT = "bold 12px Menlo, Consolas, monospace";
+  const TITLE_FONT = "bold 9px Menlo, Consolas, monospace";
+  const LINE_H = 15;
+  const TOP = 22;
+  const BOTTOM = H - 10;
+  const VISIBLE = Math.floor((BOTTOM - TOP) / LINE_H);
+
+  function draw(cycle) {
     ctx.imageSmoothingEnabled = false;
     ctx.fillStyle = "#1b1fd6";
     ctx.fillRect(0, 0, W, H);
@@ -439,9 +519,10 @@ function makeMonitorScreen() {
     ctx.fillRect(4, 2, 4, 4);
     ctx.fillStyle = "#e8e8ff";
     for (let i = 0; i < 6; i++) ctx.fillRect(14 + i * 22, 3, 12, 2);
-    // pane divider
-    ctx.fillStyle = "#3a3ff0";
-    ctx.fillRect(W / 2 - 1, 8, 2, H - 8);
+    // window title
+    ctx.font = TITLE_FONT;
+    ctx.fillStyle = "#b9bff5";
+    ctx.fillText("kushagra@home — zsh", 10, 17);
     // status bar
     ctx.fillStyle = "#12139a";
     ctx.fillRect(0, H - 8, W, 8);
@@ -450,26 +531,33 @@ function makeMonitorScreen() {
     ctx.fillStyle = "#f5d76e";
     ctx.fillRect(W - 44, H - 5, 40, 2);
 
-    // typing: left pane first, then right pane
-    const leftTotal = LEFT.reduce((n, l) => n + l[1].length, 0);
-    const leftChars = Math.min(progress, leftTotal);
-    const rightChars = Math.max(0, progress - leftTotal);
-    const L = drawPane(LEFT, 10, 24, W / 2 - 20, leftChars);
-    const R = drawPane(RIGHT, W / 2 + 10, 24, W / 2 - 20, rightChars);
-
-    // little mascot block (pixel critter) on left pane
-    ctx.fillStyle = "#f7a1c4";
-    ctx.fillRect(12, 14, 3, 3);
-    ctx.fillRect(16, 14, 3, 3);
-    ctx.fillRect(10, 17, 11, 3);
-
-    // cursor
-    const blink = Math.floor(t * 2.5) % 2 === 0;
-    if (blink) {
-      ctx.fillStyle = "#ffffff";
-      const cx = progress < leftTotal ? 10 : W / 2 + 10;
-      const cy = progress < leftTotal ? L.y - 9 : R.y - 9;
-      ctx.fillRect(cx + 2, Math.max(16, cy), 5, 9);
+    // last N lines, bottom-anchored once the screen is full
+    const shown = lines.slice(-VISIBLE);
+    let y = TOP + LINE_H;
+    let cursorX = 10;
+    let cursorY = y;
+    ctx.font = FONT;
+    for (const segs of shown) {
+      let x = 10;
+      for (const [color, text] of segs) {
+        ctx.fillStyle = color;
+        ctx.fillText(text, x, y);
+        x += ctx.measureText(text).width;
+      }
+      if (segs === input) {
+        cursorX = x;
+        cursorY = y;
+      }
+      y += LINE_H;
+    }
+    // cursor: solid while typing, blinking while idle at a prompt
+    if (input) {
+      const typingNow = cycle - lastCharAt < 0.15;
+      const blink = typingNow || Math.floor(cycle * 2.5) % 2 === 0;
+      if (blink) {
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(cursorX + 1, cursorY - 10, 7, 12);
+      }
     }
     tex.needsUpdate = true;
   }
@@ -478,55 +566,73 @@ function makeMonitorScreen() {
     tex,
     typing: false,
     update(t) {
-      // type ~26 chars/sec, hold on the finished screen, then start over
-      const cycle = t % 40;
-      progress = Math.min(TOTAL, Math.floor(cycle * 26));
-      this.typing = progress < TOTAL;
-      draw(t);
+      const cycle = t % TOTAL;
+      advance(cycle);
+      this.typing = input != null && cycle - lastCharAt < 0.15;
+      draw(cycle);
       return this.typing;
     },
   };
 }
 
+// CSSBattle logo: braces and crossed swords on yellow, 48 px wide
+const CSSBATTLE_LOGO = {
+  bg: "#111111",
+  pal: { k: "#ffe000" },
+  rows: [
+    ".....kkkk..............................kkkk.....",
+    "....kkkkk.....kkkk............kkkk....kkkkkk....",
+    "....kkkkk.....kkkkk..........kkkkk....kkkkkk....",
+    "....kkkkk.....kkkkkk........kkkkkk.....kkkkk....",
+    "....kkkk......kkkkkkk......kkkkkkk......kkkk....",
+    "....kkk........kkkkkkk....kkkkkkk.......kkkk....",
+    "....kkk.........kkkkkkk..kkkkkkk........kkkk....",
+    "....kkk..........kkkkkkk..kkkkk.........kkkk....",
+    "....kkk...........kkkkkkk..kkk..........kkkk....",
+    "...kkkk............kkkkkkk..k...........kkkkk...",
+    "..kkkkk.............kkkkkkk..............kkkkk..",
+    "..kkkk...............kkkkkkk.............kkkkk..",
+    "..kkkkk...............kkkkkkk............kkkkk..",
+    "..kkkkk......kk...kk...kkkkkkk...kk.....kkkkkk..",
+    "...kkkk......kkk.kkkk...kkkkkkk.kkk.....kkkkk...",
+    "....kkk.......kkkkkkkk...kkkkkkkkk......kkkk....",
+    "....kkk........kkkkkkk....kkkkkkk.......kkkk....",
+    "....kkk........kkkkkk......kkkkkk.......kkkk....",
+    "....kkkk......kkkkkk.......kkkkkkk......kkkk....",
+    "....kkkk.....kkkkkkkk......kkkkkkkk.....kkkk....",
+    "....kkkkk...kkkkk..kkk....kkk.kkkkkk..kkkkkk....",
+    "....kkkkk..kkkkk....kk....kk...kkkkk..kkkkkk....",
+    "....kkkkk...kkk.................kkkk..kkkkk.....",
+    ".....kkkk...kk...................kk....kkkk.....",
+  ],
+};
+
 function makeLaptopScreen() {
-  const W = 160;
-  const H = 100;
+  const W = 192;
+  const H = 120;
   const cv = document.createElement("canvas");
   cv.width = W;
   cv.height = H;
   const ctx = cv.getContext("2d");
-  ctx.fillStyle = "#3a3d44";
+  ctx.imageSmoothingEnabled = false;
+  ctx.fillStyle = CSSBATTLE_LOGO.bg;
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = "#2b2e34";
-  ctx.fillRect(0, 0, W, 7);
-  ["#ff5f57", "#febc2e", "#28c840"].forEach((c, i) => {
-    ctx.fillStyle = c;
-    ctx.fillRect(4 + i * 6, 2, 3, 3);
-  });
-  // sidebar thumbnails
-  ctx.fillStyle = "#4a4e57";
-  ctx.fillRect(0, 7, 26, H - 7);
-  for (let i = 0; i < 6; i++) {
-    ctx.fillStyle = "#ececec";
-    ctx.fillRect(6, 12 + i * 14, 14, 10);
-  }
-  // page
-  ctx.fillStyle = "#f7f7f5";
-  ctx.fillRect(40, 12, 100, H - 16);
-  ctx.fillStyle = "#222";
-  ctx.fillRect(58, 20, 64, 3);
-  ctx.fillStyle = "#777";
-  const rnd = seeded(7);
-  for (let i = 0; i < 18; i++) {
-    const w = 60 + rnd() * 24;
-    ctx.fillRect(46, 30 + i * 4, i % 6 === 5 ? w * 0.5 : w, 1.5);
+  const PW = CSSBATTLE_LOGO.rows[0].length;
+  const PH = CSSBATTLE_LOGO.rows.length;
+  const SCALE = 3;
+  const ox = Math.floor((W - PW * SCALE) / 2);
+  const oy = Math.floor((H - PH * SCALE) / 2);
+  ctx.fillStyle = CSSBATTLE_LOGO.pal.k;
+  for (let y = 0; y < PH; y++) {
+    for (let x = 0; x < PW; x++) {
+      if (CSSBATTLE_LOGO.rows[y][x] === "k") ctx.fillRect(ox + x * SCALE, oy + y * SCALE, SCALE, SCALE);
+    }
   }
   const tex = new THREE.CanvasTexture(cv);
   tex.magFilter = THREE.NearestFilter;
-  tex.minFilter = THREE.NearestFilter;
+  tex.minFilter = THREE.LinearMipmapLinearFilter;
   tex.colorSpace = THREE.SRGBColorSpace;
-  tex.generateMipmaps = false;
-  return tex;
+  return { tex };
 }
 
 // ---------------------------------------------------------------------------
@@ -714,6 +820,7 @@ export function createRoom(canvas) {
 
   // ---- MacBook -------------------------------------------------------------
   const laptop = new THREE.Group();
+  const laptopScreen = makeLaptopScreen();
   {
     const v = new Vox();
     const w = 12;
@@ -735,7 +842,7 @@ export function createRoom(canvas) {
     // screen plane
     const sc = new THREE.Mesh(
       new THREE.PlaneGeometry(w - 1.2, lidH - 1.2),
-      new THREE.MeshBasicMaterial({ map: makeLaptopScreen() })
+      new THREE.MeshBasicMaterial({ map: laptopScreen.tex })
     );
     const lid = new THREE.Group();
     lid.position.set(0, 0.7, 0);
