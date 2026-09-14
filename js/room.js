@@ -5,7 +5,7 @@
  * pixel maps (posters, screens) painted onto canvases at runtime.
  */
 import * as THREE from "/js/vendor/three.module.min.js";
-import { audio, pianoNote, playTune, blip, motor, midiName, CHALA_TUNE } from "/js/chiptune.js";
+import { audio, pianoNote, playTune, loopTune, blip, motor, midiName, CHALA_TUNE, AMBIENT_TUNE } from "/js/chiptune.js";
 
 // ---------------------------------------------------------------------------
 // Palette
@@ -877,6 +877,17 @@ export function createRoom(canvas) {
   }
 
   // ---- desk clutter --------------------------------------------------------
+  const speaker = new THREE.Group();
+  let ambient = null; // handle from loopTune while the speaker plays
+  function toggleAmbient() {
+    if (ambient && ambient.playing) {
+      ambient.stop();
+      ambient = null;
+      return;
+    }
+    if (tune && tune.playing) toggleTune(); // one song at a time
+    ambient = loopTune(AMBIENT_TUNE);
+  }
   {
     const v = new Vox();
     const y = DESK.y;
@@ -889,16 +900,6 @@ export function createRoom(canvas) {
     for (let i = 0; i < 4; i++) v.box(DESK.x + 27 + i * 2, y + 1.2, DESK.z + 5.6, 1.2, 0.3, 1.4, C.silverDark);
     v.box(DESK.x + 28.5, y + 1.2, DESK.z + 5.4, 2, 1.6, 1.8, C.black); // wall plug
     v.box(DESK.x + 31, y + 1.2, DESK.z + 5.4, 1.8, 1, 1.6, C.dark);
-    // grey retro controller (SN30-ish)
-    {
-      const gx = DESK.x + 36.8, gz = DESK.z + 15.2, gr = { rot: [0, -0.3, 0], pivot: [DESK.x + 36.8, y, DESK.z + 15.2] };
-      v.box(gx, y, gz, 5.4, 1, 2.6, C.silverDark, gr);
-      v.box(gx + 0.8, y + 1, gz + 0.7, 0.9, 0.3, 0.9, C.charcoal, gr);
-      v.box(gx + 3.5, y + 1, gz + 0.4, 0.45, 0.35, 0.45, C.red, gr);
-      v.box(gx + 4.2, y + 1, gz + 1, 0.45, 0.35, 0.45, C.blue, gr);
-      v.box(gx + 3.5, y + 1, gz + 1.5, 0.45, 0.35, 0.45, C.green, gr);
-      v.box(gx + 2.8, y + 1, gz + 1, 0.45, 0.35, 0.45, C.yellow, gr);
-    }
     // cables snaking about
     const cab = [
       [DESK.x + 25, DESK.z + 7.6, 6, 0.35],
@@ -911,7 +912,6 @@ export function createRoom(canvas) {
       [DESK.x + 36, DESK.z + 5.5, 0.35, 2.5],
     ];
     for (const [cx, cz, cw, cd] of cab) v.box(cx, y, cz, cw, 0.35, cd, C.black);
-    v.box(DESK.x + 37, y, DESK.z + 3, 0.35, 0.35, 3, C.white);
     // dark tablet + phone on the right
     v.box(DESK.x + 37, y, DESK.z + 7, 6, 0.5, 4, C.black, { rot: [0, 0.12, 0] });
     v.box(DESK.x + 37.4, y + 0.5, DESK.z + 7.4, 5.2, 0.05, 3.2, C.charcoal, { rot: [0, 0.12, 0] });
@@ -924,6 +924,32 @@ export function createRoom(canvas) {
     // LG desk mat / sticker
     v.box(DESK.x + 44, y - 0.99, DESK.z + 13.5, 3, 1.01, 1.5, C.deskTop2);
     desk.add(v.build(mat));
+
+    // small speaker on the back-right corner; click for music
+    {
+      const sv = new Vox();
+      sv.box(0, 0, 0, 3.2, 3.8, 2.6, C.charcoal);
+      sv.box(0.25, 0.25, 2.6, 2.7, 3.3, 0.1, 0x3b3f47); // grille
+      sv.box(0.9, 2.2, 2.7, 1.4, 1.4, 0.15, 0x22252b); // tweeter ring
+      sv.box(1.3, 2.6, 2.85, 0.6, 0.6, 0.1, 0x8a8f96);
+      sv.box(0.7, 0.5, 2.7, 1.8, 1.4, 0.15, 0x22252b); // woofer
+      sv.box(1.25, 0.95, 2.85, 0.7, 0.5, 0.1, 0x8a8f96);
+      sv.box(2.5, 3.3, 2.7, 0.3, 0.3, 0.1, C.green); // power led
+      speaker.add(sv.build(mat));
+      speaker.position.set(DESK.x + DESK.w - 4.2, DESK.y, DESK.z + 0.9);
+      speaker.rotation.y = -0.25;
+      desk.add(speaker);
+      hotspots.push({
+        obj: speaker,
+        name: "Music",
+        label: () => (ambient && ambient.playing ? "Stop music" : "Play music"),
+        size: [4.5, 5, 4],
+        offset: [1.6, 1.9, 1.3],
+        lift: 0.5,
+        wiggle: 0.06,
+        action: () => toggleAmbient(),
+      });
+    }
 
     // photo texture
     const photo = new THREE.Mesh(new THREE.PlaneGeometry(2.4, 1.8), new THREE.MeshLambertMaterial({ map: pixelTexture(PHOTO.rows, PHOTO.pal, PHOTO.bg) }));
@@ -1026,6 +1052,7 @@ export function createRoom(canvas) {
       tune = null;
       return;
     }
+    if (ambient && ambient.playing) toggleAmbient(); // one song at a time
     tune = playTune(CHALA_TUNE, { onEnd: () => (tune = null) });
     tuneIdx = 0;
   }
@@ -1140,22 +1167,24 @@ export function createRoom(canvas) {
     v.box(x0, 17.2, z0 - 0.3, 3.9, 0.6, len + 0.6, C.piano); // top lid
     v.box(x0 + 3.6, 14, z0, 0.4, 0.5, len, C.piano); // fallboard lip
     // keys: a separate instanced mesh so each key can be picked and pressed.
-    // 33 white keys starting at C2, black keys after C D F G A.
+    // 33 white keys, C2 at the front (viewer's left) rising toward the wall.
     const white = 33;
     const kz0 = z0 + 1.2;
     const kw = (len - 2.4) / white;
     const kv = new Vox();
     const deg = [0, 2, 4, 5, 7, 9, 11];
-    const whiteMidi = (i) => 36 + Math.floor(i / 7) * 12 + deg[i % 7];
+    const pitchOf = (n) => 36 + Math.floor(n / 7) * 12 + deg[n % 7]; // n = 0 is C2
+    const pitchIndex = (i) => white - 1 - i; // key slot i (0 = nearest the wall) -> pitch number
     for (let i = 0; i < white; i++) {
       kv.box(x0 + 3.9, 14, kz0 + i * kw, 3.4, 0.7, kw - 0.08, C.key);
-      pianoKeyDefs.push({ midi: whiteMidi(i), baseY: 14 });
+      pianoKeyDefs.push({ midi: pitchOf(pitchIndex(i)), baseY: 14 });
     }
-    const pattern = [1, 1, 0, 1, 1, 1, 0]; // black key after which white keys
+    const pattern = [1, 1, 0, 1, 1, 1, 0]; // a black key sits above white n when pattern[n % 7]
     for (let i = 0; i < white - 1; i++) {
-      if (!pattern[i % 7]) continue;
+      const lower = pitchIndex(i + 1); // the lower-pitched white of this pair
+      if (!pattern[lower % 7]) continue;
       kv.box(x0 + 3.9, 14.7, kz0 + (i + 1) * kw - kw * 0.3, 2.0, 0.55, kw * 0.6, C.keyBlack);
-      pianoKeyDefs.push({ midi: whiteMidi(i) + 1, baseY: 14.7 });
+      pianoKeyDefs.push({ midi: pitchOf(lower) + 1, baseY: 14.7 });
     }
     pianoKeys = kv.build(mat);
     pianoKeyDefs.forEach((k, i) => keyByMidi.set(k.midi, i));
@@ -1852,6 +1881,10 @@ export function createRoom(canvas) {
       art.material.needsUpdate = true;
     }
     goku.position.z = jamming ? 0.2 + Math.sin(t * 11) * 0.12 : 0;
+    // speaker nods along to the ambient loop
+    const vibing = !!(ambient && ambient.playing);
+    speaker.rotation.z = vibing ? Math.sin(t * 6.1) * 0.03 : 0;
+    speaker.scale.y = vibing ? 1 + Math.max(0, Math.sin(t * 6.1)) * 0.04 : 1;
 
     // sit-stand desk
     if (deskState.pos !== deskState.goal) {
@@ -1931,6 +1964,7 @@ export function createRoom(canvas) {
     toggleLights,
     toggleDesk,
     toggleTune,
+    toggleAmbient,
     step: tick,
     /** "auto" (follow the OS), "dark" or "light" */
     setTheme(mode) {

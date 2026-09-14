@@ -180,13 +180,28 @@ function parseTrack(str) {
  * Returns a handle { events, endTime, playing, stop() }. `events` lists the
  * melody notes with their AudioContext times so the room can animate along.
  */
-export function playTune(tune, { onEnd } = {}) {
+export function playTune(tune, { onEnd, startAt } = {}) {
   const ac = audio();
   if (!ac) return null;
   const bus = ac.createGain();
   bus.gain.value = tune.volume ?? 0.6;
   bus.connect(master);
-  const t0 = ac.currentTime + 0.08;
+  if (tune.echo) {
+    // a soft feedback delay for dreamy, roomy tunes
+    const delay = ac.createDelay(2);
+    delay.delayTime.value = tune.echo.time ?? 0.3;
+    const fb = ac.createGain();
+    fb.gain.value = tune.echo.feedback ?? 0.3;
+    const wet = ac.createGain();
+    wet.gain.value = tune.echo.mix ?? 0.25;
+    const tone = ac.createBiquadFilter();
+    tone.type = "lowpass";
+    tone.frequency.value = 2400;
+    bus.connect(delay);
+    delay.connect(tone).connect(fb).connect(delay);
+    tone.connect(wet).connect(master);
+  }
+  const t0 = startAt ?? ac.currentTime + 0.08;
   const step = 60 / tune.bpm / 4;
   const nodes = [];
   const events = [];
@@ -272,6 +287,32 @@ export function playTune(tune, { onEnd } = {}) {
     bus.disconnect();
     onEnd && onEnd();
   }, (endTime - ac.currentTime + 0.6) * 1000);
+  return handle;
+}
+
+/** Play a tune on repeat, gapless. Returns { playing, stop() }. */
+export function loopTune(tune) {
+  const ac = audio();
+  if (!ac) return null;
+  let current = null;
+  let timer = 0;
+  const handle = {
+    playing: true,
+    stop(fade = 0.6) {
+      if (!handle.playing) return;
+      handle.playing = false;
+      clearTimeout(timer);
+      if (current) current.stop(fade);
+    },
+  };
+  const go = (startAt) => {
+    if (!handle.playing) return;
+    current = playTune(tune, { startAt });
+    // queue the next pass just before this one ends
+    const wait = Math.max(0.05, current.endTime - ac.currentTime - 0.25);
+    timer = setTimeout(() => go(current.endTime), wait * 1000);
+  };
+  go(ac.currentTime + 0.08);
   return handle;
 }
 
@@ -456,4 +497,43 @@ export const CHALA_TUNE = {
     { wave: "triangle", gain: 0.3, gate: 0.8, notes: BARS.map(bassBar).join(" | ") },
   ],
   drums: [Array(2).fill("K.h.s.h.K.h.s.h."), Array(4).fill("k.h...h.k.h...h."), Array(BARS.length - 7).fill("K.h.s.h.K.h.s.h."), ["K.......s......."]].flat().join("|"),
+};
+
+// ---------------------------------------------------------------------------
+// The desk speaker: a gentle looping chiptune, soft and a little dreamy
+// ---------------------------------------------------------------------------
+const AMBIENT_CHORDS = ["C", "Am", "F", "G", "C", "Am", "F", "G"];
+const AMB_ARP = {
+  C: "C4:2 E4:2 G4:2 B4:2 C5:2 B4:2 G4:2 E4:2",
+  Am: "A3:2 C4:2 E4:2 G4:2 A4:2 G4:2 E4:2 C4:2",
+  F: "F3:2 A3:2 C4:2 E4:2 F4:2 E4:2 C4:2 A3:2",
+  G: "G3:2 B3:2 D4:2 F#4:2 G4:2 F#4:2 D4:2 B3:2",
+};
+const AMB_BASS = { C: "C2:8 G2:8", Am: "A2:8 E2:8", F: "F2:8 C3:8", G: "G2:8 D3:8" };
+export const AMBIENT_TUNE = {
+  bpm: 92,
+  volume: 0.42,
+  echo: { time: 0.39, feedback: 0.35, mix: 0.3 },
+  channels: [
+    {
+      // melody: soft triangle, long notes, gentle vibrato
+      wave: "triangle",
+      gain: 0.16,
+      gate: 0.95,
+      decay: 0.6,
+      vibrato: 0.006,
+      notes: [
+        "E5:4 G5:4 A5:6 G5:2",
+        "E5:8 D5:4 C5:4",
+        "A4:4 C5:4 D5:6 C5:2",
+        "D5:8 E5:8",
+        "G5:4 E5:4 D5:4 C5:4",
+        "A4:6 C5:2 D5:8",
+        "E5:4 D5:4 C5:4 A4:4",
+        "G4:12 R:4",
+      ].join(" | "),
+    },
+    { wave: "pulse", duty: 0.125, gain: 0.05, gate: 0.7, decay: 0.4, notes: AMBIENT_CHORDS.map((c) => AMB_ARP[c]).join(" | ") },
+    { wave: "triangle", gain: 0.2, gate: 0.95, notes: AMBIENT_CHORDS.map((c) => AMB_BASS[c]).join(" | ") },
+  ],
 };

@@ -291,11 +291,13 @@
         z-index: 2;
         pointer-events: none;
         font-family: "Press Start 2P", cursive;
-        font-size: 11px;
+        font-size: 15px;
+        letter-spacing: 0.5px;
         color: #1a1530;
         background: var(--main-text-color);
-        padding: 8px 10px 7px;
-        box-shadow: 3px 3px 0 rgba(0, 0, 0, 0.5);
+        padding: 11px 14px 10px;
+        border: 3px solid #1a1530;
+        box-shadow: 4px 4px 0 rgba(0, 0, 0, 0.55);
         opacity: 0;
         transition: opacity 0.15s ease;
         white-space: nowrap;
@@ -304,11 +306,13 @@
         content: "";
         position: absolute;
         left: 50%;
-        bottom: -6px;
-        width: 6px;
-        height: 6px;
-        margin-left: -3px;
+        bottom: -11px;
+        width: 8px;
+        height: 8px;
+        margin-left: -4px;
         background: var(--main-text-color);
+        border: 3px solid #1a1530;
+        border-top: 0;
       }
       .tip.is-visible {
         opacity: 1;
@@ -414,7 +418,8 @@
           display: none;
         }
         .tip {
-          font-size: 10px;
+          font-size: 12px;
+          padding: 9px 11px 8px;
         }
       }
       /* narrow phones: one more step down so the name never wraps */
