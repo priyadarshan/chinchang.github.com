@@ -895,11 +895,6 @@ export function createRoom(canvas) {
     v.box(DESK.x + 33, y, DESK.z + 12.5, 2.6, 1, 4.2, C.white, { rot: [0, -0.25, 0] });
     v.box(DESK.x + 33.3, y + 1, DESK.z + 13, 2, 1.6, 3.4, C.offWhite, { rot: [0, -0.25, 0] });
     v.box(DESK.x + 33.6, y + 2.6, DESK.z + 13.3, 1.4, 0.8, 2.4, C.white, { rot: [0, -0.25, 0] });
-    // power strip + adapters
-    v.box(DESK.x + 26, y, DESK.z + 5, 9, 1.2, 2.6, C.white);
-    for (let i = 0; i < 4; i++) v.box(DESK.x + 27 + i * 2, y + 1.2, DESK.z + 5.6, 1.2, 0.3, 1.4, C.silverDark);
-    v.box(DESK.x + 28.5, y + 1.2, DESK.z + 5.4, 2, 1.6, 1.8, C.black); // wall plug
-    v.box(DESK.x + 31, y + 1.2, DESK.z + 5.4, 1.8, 1, 1.6, C.dark);
     // cables snaking about
     const cab = [
       [DESK.x + 25, DESK.z + 7.6, 6, 0.35],
